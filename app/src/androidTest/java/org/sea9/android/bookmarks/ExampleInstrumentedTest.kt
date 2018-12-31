@@ -1,12 +1,15 @@
 package org.sea9.android.bookmarks
 
+import android.content.Context
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
+import android.util.Log
 
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import org.junit.BeforeClass
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -15,10 +18,43 @@ import org.junit.Assert.*
  */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
-    @Test
-    fun useAppContext() {
-        // Context of the app under test.
-        val appContext = InstrumentationRegistry.getTargetContext()
-        assertEquals("org.sea9.android.bookmarks", appContext.packageName)
-    }
+	companion object {
+		private lateinit var context: Context
+		private lateinit var helper: DbHelper
+
+		@BeforeClass
+		@JvmStatic
+		fun prepare() {
+			context = InstrumentationRegistry.getTargetContext()
+			helper = DbHelper(object : DbHelper.Caller {
+				override fun getContext(): Context? {
+					return context
+				}
+				override fun onReady() {
+					Log.w("bookmarks.instrumented_test", "DB test connection ready")
+				}
+			})
+
+//			DbContract.Bookmarks.insert(helper, "https://martinfowler.com/eaaDev/EventSourcing.html", "Event Sourcing")
+//			DbContract.Bookmarks.insert(helper, "https://thinkbeforecoding.com/post/2013/07/28/Event-Sourcing-vs-Command-Sourcing", "Event Sourcing vs Command Sourcing")
+//			DbContract.Bookmarks.insert(helper, "https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a", "What they don’t tell you about event sourcing")
+//			DbContract.Bookmarks.insert(helper, "https://medium.com/the-coding-matrix/ddd-101-the-5-minute-tour-7a3037cf53b8", "DDD 101 — The 5-Minute Tour")
+//			DbContract.Bookmarks.insert(helper, "https://android.jlelse.eu/how-to-wrap-your-imperative-brain-around-functional-reactive-programming-in-rxjava-91ac89a4eccf", "How to wrap your imperative brain around functional reactive programming in RxJava")
+//			DbContract.Bookmarks.insert(helper, "https://gist.github.com/staltz/868e7e9bc2a7b8c1f754", "The introduction to Reactive Programming you've been missing")
+//			DbContract.Bookmarks.insert(helper, "https://12factor.net/", "The Twelve-Factor App")
+//			DbContract.Bookmarks.insert(helper, "https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/", "Free Virtual Machines from IE8 to MS Edge")
+//			DbContract.Bookmarks.insert(helper, "https://www.techradar.com/news/best-garmin-running-watches", "Best Garmin watch 2018")
+//			DbContract.Bookmarks.insert(helper, "http://playitagain.info/site/movie-index/", "Movie Index | Play It Again")
+//			DbContract.Bookmarks.insert(helper, "https://danielpocock.com/quick-start-blender-video-editing", "Quick start using Blender for video editing")
+//			DbContract.Bookmarks.insert(helper, "https://www.anker.com/products/108/chargers", "Anker | chargers")
+//			DbContract.Bookmarks.insert(helper, "https://sea9.org", "SEA9.ORG")
+		}
+	}
+
+	@Test
+	fun useAppContext() {
+		// Context of the app under test.
+		val appContext = InstrumentationRegistry.getTargetContext()
+		assertEquals("org.sea9.android.bookmarks", appContext.packageName)
+	}
 }
