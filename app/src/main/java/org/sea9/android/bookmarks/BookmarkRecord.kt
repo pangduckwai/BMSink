@@ -4,6 +4,7 @@ data class BookmarkRecord(
 	  var pid: Long
 	, var url: String
 	, var title: String
+	, var category: MutableList<String>?
 	, var modified: Long
 ) {
 	override fun equals(other: Any?): Boolean {

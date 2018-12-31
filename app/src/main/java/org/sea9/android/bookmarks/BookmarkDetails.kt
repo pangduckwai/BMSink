@@ -20,6 +20,7 @@ class BookmarkDetails : AppCompatActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		Log.d(TAG, "onCreate()")
 		setContentView(R.layout.details_main)
 		setSupportActionBar(toolbar)
 
@@ -32,6 +33,12 @@ class BookmarkDetails : AppCompatActivity() {
 
 		tempText = findViewById(R.id.bookmark)
 
+		handleIncomingIntent(intent)
+	}
+
+	override fun onNewIntent(intent: Intent?) {
+		super.onNewIntent(intent)
+		Log.w(TAG, "onNewIntent()")
 		handleIncomingIntent(intent)
 	}
 

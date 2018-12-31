@@ -43,12 +43,6 @@ class MainActivity : AppCompatActivity() {
 		recycler.adapter = cntxFrag.adaptor
 	}
 
-//	override fun onNewIntent(intent: Intent?) {
-//		super.onNewIntent(intent)
-//		Log.w(TAG, "onNewIntent()")
-//		handleIncomingIntent(intent)
-//	}
-
 	override fun onCreateOptionsMenu(menu: Menu): Boolean {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		menuInflater.inflate(R.menu.menu_main, menu)
@@ -65,12 +59,4 @@ class MainActivity : AppCompatActivity() {
 			else -> super.onOptionsItemSelected(item)
 		}
 	}
-
-//	private fun initRetainedFragment() {
-//		cntxFrag = supportFragmentManager.findFragmentByTag(MainContext.TAG) as MainContext?
-//		if (cntxFrag == null) {
-//			cntxFrag = MainContext()
-//			supportFragmentManager.beginTransaction().add(cntxFrag!!, MainContext.TAG).commit()
-//		}
-//	}
 }
