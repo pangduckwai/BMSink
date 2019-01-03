@@ -2,118 +2,106 @@ package org.sea9.android.bookmarks
 
 import android.content.ContentValues
 import android.provider.BaseColumns
-import org.json.JSONArray
-import org.json.JSONObject
 import java.util.*
 
 object DbContract {
 	const val DATABASE = "Bookmarks.db_contract"
 	const val TBL_BOOKMARK = "Bookmarks"
-	const val TBL_INDEX = "Indexes"
+	const val TBL_IDX_URL = "IdxUrl"
+	const val TBL_IDX_TITLE = "idxTitle"
+	const val TBL_IDX_CATEGORY = "idxCategory"
 	const val COL_RID = BaseColumns._ID
+	const val COL_IDX = "idx"
 	const val COL_JSON = "json"
-	const val COL_TYPE = "type"
-	const val COL_VALUE = "value"
+	const val COL_URL = "url"
+	const val COL_TITLE = "title"
+	const val COL_CATEGORY = "category"
 	const val COL_MODIFIED = "modified"
 	const val SEL_RID = "$COL_RID = ?"
 	const val SQL_CONFIG = "PRAGMA foreign_keys=ON"
 	val COLS_BOOKMARK = arrayOf(COL_RID, COL_JSON, COL_MODIFIED)
-	val COLS_INDEX = arrayOf(COL_TYPE, COL_VALUE, COL_RID)
 
 	const val SQL_CREATE_BOOKMARK =
 		"create table $TBL_BOOKMARK (" +
 		"$COL_RID integer primary key autoincrement," +
 		"$COL_JSON text not null," +
 		"$COL_MODIFIED integer)"
-	const val SQL_CREATE_INDEX =
-		"create table $TBL_INDEX (" +
-		"$COL_TYPE text not null," +
-		"$COL_VALUE text not null," +
-		"$COL_RID integer not null" +
-		"PRIMARY KEY ($COL_TYPE, $COL_VALUE))"
+	const val SQL_CREATE_IDX_URL =
+		"create table $TBL_IDX_URL (" +
+		"$COL_URL text primary key," +
+		"$COL_IDX integer not null)"
+	const val SQL_CREATE_IDX_TITLE =
+		"create table $TBL_IDX_TITLE (" +
+		"$COL_TITLE text primary key," +
+		"$COL_IDX integer not null)"
+	const val SQL_CREATE_IDX_CATEGORY =
+		"create table $TBL_IDX_CATEGORY (" +
+		"$COL_CATEGORY text not null," +
+		"$COL_IDX integer not null," +
+		"PRIMARY KEY ($COL_CATEGORY, $COL_IDX))"
 
 	const val SQL_DROP_BOOKMARK = "drop table if exists $TBL_BOOKMARK"
-	const val SQL_DROP_INDEX = "drop table if exists $TBL_INDEX"
+	const val SQL_DROP_IDX_URL = "drop table if exists $TBL_IDX_URL"
+	const val SQL_DROP_IDX_TITLE = "drop table if exists $TBL_IDX_TITLE"
+	const val SQL_DROP_IDX_CATEGORY = "drop table if exists $TBL_IDX_CATEGORY"
 
 	class Bookmarks : BaseColumns {
 		companion object {
 			/**
 			 * Select all bookmarks.
 			 */
-			fun select(helper: DbHelper?): JSONArray {
+			fun select(helper: DbHelper?): List<BookmarkRecord>? {
 				// Not using order-by in query because keys are encrypted as well
 				val cursor = helper?.readableDatabase
 					?.query(TBL_BOOKMARK, COLS_BOOKMARK, null, null, null, null, null)
 
-				val result = JSONArray()
+				val result = mutableSetOf<BookmarkRecord>()
 				cursor?.use { c ->
 					with(c) {
 						while (moveToNext()) {
-							val json = getString(getColumnIndexOrThrow(COL_JSON))
-							val rid = getLong((getColumnIndexOrThrow(COL_RID)))
+							val pid = getLong((getColumnIndexOrThrow(COL_RID)))
 							val modified = getLong(getColumnIndexOrThrow(COL_MODIFIED))
+							val url = getString(getColumnIndexOrThrow(COL_URL))
+							val ttl = getString(getColumnIndexOrThrow(COL_TITLE))
 
-							val rec = JSONObject(json)
-							rec.put(COL_RID, rid)
-							rec.put(COL_MODIFIED, modified)
-							result.put(rec)
+							val rec = BookmarkRecord(pid, url, ttl, null, modified)
+							result.add(rec)
 						}
 					}
 				}
-				return result
+				return result.toMutableList()
 			}
 
 			/**
 			 * Insert a new bookmark.
 			 */
-			fun insert(helper: DbHelper?, json: JSONObject): Long {
+			fun insert(helper: DbHelper?, url: String, title: String): Long? {
 				val db = helper?.writableDatabase
 				if (db != null) {
-					db.beginTransactionNonExclusive()
-					try {
-						val newRow = ContentValues().apply {
-							put(COL_JSON, json.toString())
-							put(COL_MODIFIED, Date().time)
-						}
-						val rid = db.insertOrThrow(TBL_BOOKMARK, null, newRow)
-						if (rid >= 0) {
-							json.keys().forEach { key ->
-								json.optJSONArray(key)?.let {
-
-								} ?: run {
-									val idxRow = ContentValues().apply {
-										put(COL_TYPE, key)
-										put(COL_VALUE, json.optString(key))
-										put(COL_RID, rid)
-									}
-									if (db.insertOrThrow(TBL_INDEX, null, idxRow) >= 0)
-										db.setTransactionSuccessful()
-								}
-							}
-						}
-
-						return rid
-					} finally {
-						db.endTransaction()
+					val newRow = ContentValues().apply {
+						put(COL_URL, url)
+						put(COL_TITLE, title)
+						put(COL_MODIFIED, Date().time)
 					}
+					return db.insertOrThrow(TABLE, null, newRow)
 				}
-				return -1
+				return null
 			}
 
 			/**
 			 * Update the title of a bookmark.
 			 */
-			fun update(helper: DbHelper?, rid: Long, json: JSONObject): Int {
-				val args = arrayOf(rid.toString())
+			fun update(helper: DbHelper?, bid: Long, title: String): Int {
+				val args = arrayOf(bid.toString())
 				val db = helper?.writableDatabase
 				var ret = -1
 
 				if (db != null) {
 					val newRow = ContentValues().apply {
-						put(COL_JSON, json.toString())
+						put(COL_TITLE, title)
 						put(COL_MODIFIED, Date().time)
 					}
-					ret = db.update(TBL_BOOKMARK, newRow, SEL_RID, args)
+					ret = db.update(TABLE, newRow, SEL_RID, args)
 				}
 				return ret
 			}
@@ -121,13 +109,13 @@ object DbContract {
 			/**
 			 * Delete a bookmark.
 			 */
-			fun delete(helper: DbHelper?, rid: Long): Int {
-				val args = arrayOf(rid.toString())
+			fun delete(helper: DbHelper?, bid: Long): Int {
+				val args = arrayOf(bid.toString())
 				val db = helper?.writableDatabase
 				var ret = -1
 
 				if (db != null) {
-					ret = db.delete(TBL_BOOKMARK, SEL_RID, args)
+					ret = db.delete(TABLE, SEL_RID, args)
 				}
 				return ret
 			}
