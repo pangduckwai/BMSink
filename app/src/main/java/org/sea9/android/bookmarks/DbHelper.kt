@@ -24,28 +24,25 @@ class DbHelper(private val caller: Caller, isTest: Boolean):
 	}
 
 	override fun onCreate(db: SQLiteDatabase) {
-		db.execSQL(DbContract.SQL_CREATE_BOOKMARK)
-		db.execSQL(DbContract.SQL_CREATE_IDX_URL)
-		db.execSQL(DbContract.SQL_CREATE_IDX_TITLE)
-		db.execSQL(DbContract.SQL_CREATE_IDX_CATEGORY)
+		db.execSQL(DbContract.Bookmarks.SQL_CREATE)
+		db.execSQL(DbContract.Bookmarks.SQL_CREATE_IDX_URL)
+		db.execSQL(DbContract.Bookmarks.SQL_CREATE_IDX_TITLE)
 		Log.i(TAG, "Database ${db.path} version ${db.version} created")
 	}
 
 	override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 		Log.i(TAG, "Upgrading database from version $oldVersion to $newVersion, which will destroy all old data")
-		db.execSQL(DbContract.SQL_DROP_IDX_CATEGORY)
-		db.execSQL(DbContract.SQL_DROP_IDX_TITLE)
-		db.execSQL(DbContract.SQL_DROP_IDX_URL)
-		db.execSQL(DbContract.SQL_DROP_BOOKMARK)
+		db.execSQL(DbContract.Bookmarks.SQL_DROP_IDX_TITLE)
+		db.execSQL(DbContract.Bookmarks.SQL_DROP_IDX_URL)
+		db.execSQL(DbContract.Bookmarks.SQL_DROP)
 		onCreate(db)
 	}
 
 	fun deleteDatabase() {
 		val dbName = databaseName
-		writableDatabase.execSQL(DbContract.SQL_DROP_IDX_CATEGORY)
-		writableDatabase.execSQL(DbContract.SQL_DROP_IDX_TITLE)
-		writableDatabase.execSQL(DbContract.SQL_DROP_IDX_URL)
-		writableDatabase.execSQL(DbContract.SQL_DROP_BOOKMARK)
+		writableDatabase.execSQL(DbContract.Bookmarks.SQL_DROP_IDX_TITLE)
+		writableDatabase.execSQL(DbContract.Bookmarks.SQL_DROP_IDX_URL)
+		writableDatabase.execSQL(DbContract.Bookmarks.SQL_DROP)
 		caller.getContext()?.deleteDatabase(databaseName)
 		Log.i(TAG, "Database $dbName deleted")
 	}
