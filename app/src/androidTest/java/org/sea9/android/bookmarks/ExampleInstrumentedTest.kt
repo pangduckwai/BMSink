@@ -1,14 +1,17 @@
 package org.sea9.android.bookmarks
 
 import android.content.Context
+import android.database.SQLException
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import android.util.Log
+import org.junit.AfterClass
 
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.BeforeClass
 
 /**
@@ -21,6 +24,7 @@ class ExampleInstrumentedTest {
 	companion object {
 		private lateinit var context: Context
 		private lateinit var helper: DbHelper
+		private lateinit var tags: List<TagRecord>
 
 		@BeforeClass
 		@JvmStatic
@@ -35,14 +39,17 @@ class ExampleInstrumentedTest {
 				}
 			})
 
-			val tags = DbContract.Tags.select(helper)
+			tags = DbContract.Tags.select(helper)
 			if (tags.isEmpty()) {
 				Log.w("bookmarks.itest", "Adding new TAGS")
-				DbContract.Tags.insert(helper, "Technology")
-				DbContract.Tags.insert(helper, "Entertainment")
-				DbContract.Tags.insert(helper, "Hobbies")
-				DbContract.Tags.insert(helper, "Resources")
-				DbContract.Tags.insert(helper, "Christian")
+				DbContract.Tags.insert(helper, "Technology")	//4
+				DbContract.Tags.insert(helper, "Entertainment")	//1
+				DbContract.Tags.insert(helper, "Hobbies")		//2
+				DbContract.Tags.insert(helper, "Resources")		//3
+				DbContract.Tags.insert(helper, "Christian")		//0
+				tags = DbContract.Tags.select(helper)
+			} else {
+				Log.w("bookmarks.itest", "${tags.size} tags already exists")
 			}
 
 			val bookmarks = DbContract.Bookmarks.select(helper)
@@ -166,9 +173,25 @@ class ExampleInstrumentedTest {
 					helper,
 					BookmarkRecord(-1, "https://sea9.org", "SEA9.ORG", mutableSetOf(tags[2], tags[4]), 0)
 				)
+			} else {
+				Log.w("bookmarks.itest", "${bookmarks.size} bookmarks already exists")
 			}
 		}
+
+		@AfterClass
+		@JvmStatic
+		fun cleanup() {
+			helper.deleteDatabase()
+		}
 	}
+
+//	@Before
+//	fun isReady() {
+//		while (!dbReady) {
+//			Log.w("bookmarks.itest.testDbReady", "DB Not yet ready...")
+//			Thread.sleep(500)
+//		}
+//	}
 
 	@Test
 	fun useAppContext() {
@@ -179,14 +202,44 @@ class ExampleInstrumentedTest {
 
 	@Test
 	fun testDbReady() {
-		val tags = DbContract.Tags.select(helper)
-		tags.forEachIndexed { index, tagRecord ->
-			Log.w("bookmarks.itest.testDbReady", "TAG: $index : ${tagRecord.tag}")
-		}
-
+		val tagList = DbContract.Tags.select(helper)
+		Log.w("bookmarks.itest.testDbReady", "No. of rows returned: ${tagList.size}")
 		val bookmarks = DbContract.Bookmarks.select(helper)
 		Log.w("bookmarks.itest.testDbReady", "No. of rows returned: ${bookmarks.size}")
 
 		assertTrue(bookmarks.size >= 0)
+	}
+
+	@Test(expected = SQLException::class)
+	fun testPrimaryKey() {
+		Log.w("bookmarks.itest.testPrimaryKey", "Attempt to add duplicated tag 'Resources'")
+		DbContract.Tags.insert(helper, "Resources")
+	}
+
+	@Test(expected = SQLException::class)
+	fun testUniqueIndex1() {
+		Log.w("bookmarks.itest.testUniqueIndex1", "Attempt to add duplicated bookmark (1)")
+		DbContract.Bookmarks.insert(helper,
+			BookmarkRecord(-1, "https://sea9.org", "SEA9.COM", mutableSetOf(tags[2], tags[4]), 0)
+		)
+	}
+
+	@Test(expected = SQLException::class)
+	fun testUniqueIndex2() {
+		Log.w("bookmarks.itest.testUniqueIndex2", "Attempt to add duplicated bookmark (2)")
+		DbContract.Bookmarks.insert(helper,
+			BookmarkRecord(-1, "https://sea9.com", "SEA9.ORG", mutableSetOf(tags[2], tags[4]), 0)
+		)
+	}
+
+	@Test
+	fun testDeleteUnusedTags() {
+		val count = DbContract.Tags.delete(helper)
+		Log.w("bookmarks.itest.testDeleteUnusedTags", "Row deleted: $count")
+		val tids = DbContract.Tags.select(helper)
+		tids.forEachIndexed { index, tagRecord ->
+			Log.w("bookmarks.itest.testDeleteUnusedTags", "TAG: $index : ${tagRecord.tag}")
+		}
+		assertTrue(tags.size == 4)
 	}
 }
