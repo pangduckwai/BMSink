@@ -104,6 +104,7 @@ object DbContract {
 			const val TABLE = "Bookmarks"
 			const val COL_URL = "url"
 			const val COL_TITLE = "title"
+			private const val COL_MODF = "modf"
 			private const val IDX_URL = "idxUrl"
 			private const val IDX_TITLE = "idxTitle"
 
@@ -121,7 +122,7 @@ object DbContract {
 
 			private const val QUERY_CONTENT =
 				"select b.$PKEY, b.$COL_TITLE, b.$COL_URL, b.$COMMON_MODF" +
-				"     , bt.${BookmarkTags.COL_TID}, t.${Tags.COL_TAG_NAME}" +
+				"     , bt.${BookmarkTags.COL_TID}, t.${Tags.COL_TAG_NAME}, t.$COMMON_MODF as $COL_MODF" +
 				"  from $TABLE as b" +
 				" left outer join (" +
 				"    ${BookmarkTags.TABLE} as bt" +
@@ -154,7 +155,8 @@ object DbContract {
 							val url = getString(getColumnIndexOrThrow(COL_URL))
 							val tid = getLong(getColumnIndexOrThrow(BookmarkTags.COL_TID))
 							val tag = getString(getColumnIndexOrThrow(Tags.COL_TAG_NAME))
-							val trec = tag?.let { TagRecord(tid, tag, 0) }
+							val mod = getLong(getColumnIndexOrThrow(COL_MODF))
+							val trec = tag?.let { TagRecord(tid, tag, mod) }
 
 							if (result.containsKey(url)) {
 								trec?.let {
