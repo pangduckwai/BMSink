@@ -7,7 +7,7 @@
 		android:layout_height="match_parent"
 		app:layout_behavior="@string/appbar_scrolling_view_behavior"
 		tools:showIn="@layout/details_main"
-		tools:context=".BookmarkDetails">
+		tools:context=".details.BookmarkDetails">
 
 	<TextView
 			android:id="@+id/bookmark"

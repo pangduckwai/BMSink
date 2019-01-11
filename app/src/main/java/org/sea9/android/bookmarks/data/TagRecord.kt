@@ -1,4 +1,4 @@
-package org.sea9.android.bookmarks
+package org.sea9.android.bookmarks.data
 
 import org.json.JSONObject
 

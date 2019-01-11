@@ -1,4 +1,4 @@
-package org.sea9.android.bookmarks
+package org.sea9.android.bookmarks.data
 
 import android.content.ContentValues
 import android.database.Cursor
@@ -20,7 +20,11 @@ object DbContract {
 			const val COL_TAG_NAME = "tagName"
 			private const val IDX_TAG = "idxTag"
 
-			private val COLUMNS = arrayOf(PKEY, COL_TAG_NAME, COMMON_MODF)
+			private val COLUMNS = arrayOf(
+				PKEY,
+				COL_TAG_NAME,
+				COMMON_MODF
+			)
 
 			const val SQL_CREATE =
 				"create table $TABLE (" +
@@ -43,7 +47,11 @@ object DbContract {
 			 */
 			fun select(helper: DbHelper): List<TagRecord> {
 				val cursor = helper.readableDatabase
-					.query(TABLE, COLUMNS, null, null, null, null, COL_TAG_NAME)
+					.query(
+						TABLE,
+						COLUMNS, null, null, null, null,
+						COL_TAG_NAME
+					)
 
 				val result = mutableListOf<TagRecord>()
 				cursor.use {
@@ -134,14 +142,20 @@ object DbContract {
 			 * Select bookmarks.
 			 */
 			fun select(helper: DbHelper): List<BookmarkRecord> {
-				return select(helper.readableDatabase.rawQuery(
-					QUERY_CONTENT + " order by b.$COL_TITLE, t.${Tags.COL_TAG_NAME}",
-					null))
+				return select(
+					helper.readableDatabase.rawQuery(
+						QUERY_CONTENT + " order by b.$COL_TITLE, t.${Tags.COL_TAG_NAME}",
+						null
+					)
+				)
 			}
 			fun select(helper: DbHelper, bid: Long): BookmarkRecord? {
-				val result = select(helper.readableDatabase.rawQuery(
-					QUERY_CONTENT + " where b.$PKEY = ? order by  t.${Tags.COL_TAG_NAME}",
-					arrayOf(bid.toString())))
+				val result = select(
+					helper.readableDatabase.rawQuery(
+						QUERY_CONTENT + " where b.$PKEY = ? order by  t.${Tags.COL_TAG_NAME}",
+						arrayOf(bid.toString())
+					)
+				)
 				return if (result.isNotEmpty())
 					result[0]
 				else
@@ -169,7 +183,8 @@ object DbContract {
 								val cat = trec?.let {
 									mutableSetOf(it)
 								}
-								result[url] = BookmarkRecord(pid, url, ttl, cat, modified)
+								result[url] =
+										BookmarkRecord(pid, url, ttl, cat, modified)
 							}
 						}
 					}
@@ -193,7 +208,11 @@ object DbContract {
 					val bid = db.insertOrThrow(TABLE, null, newRow)
 					if (bid >= 0) {
 						record.category?.forEach { tag ->
-							if (BookmarkTags.insert(helper, bid, tag.rid) < 0)
+							if (BookmarkTags.insert(
+									helper,
+									bid,
+									tag.rid
+								) < 0)
 								throw RuntimeException("Persisting tag ${tag.rid} failed")
 						}
 						db.setTransactionSuccessful()
@@ -218,7 +237,9 @@ object DbContract {
 						if (record.title != rec.title) put(COL_TITLE, record.title)
 						if (size() > 0) put(COMMON_MODF, Date().time)
 					}
-					var ret = if (newRow.size() > 0) db.update(TABLE, newRow, COMMON_PKEY, args) else 0
+					var ret = if (newRow.size() > 0) db.update(
+						TABLE, newRow,
+						COMMON_PKEY, args) else 0
 
 					if (ret >= 0) {
 						if (((record.category != null) && (rec.category == null)) ||
@@ -228,7 +249,11 @@ object DbContract {
 							if (count >= 0) {
 								var error = false
 								record.category?.forEach { tag ->
-									if (BookmarkTags.insert(helper, record.rid, tag.rid) < 0)
+									if (BookmarkTags.insert(
+											helper,
+											record.rid,
+											tag.rid
+										) < 0)
 										error = true
 								}
 								ret = if (error) -2 else 1
@@ -253,7 +278,9 @@ object DbContract {
 				try {
 					val count = db.delete(BookmarkTags.TABLE, "${BookmarkTags.COL_BID} = ?", args)
 					if (count >= 0) {
-						val ret = db.delete(TABLE, COMMON_PKEY, args)
+						val ret = db.delete(
+							TABLE,
+							COMMON_PKEY, args)
 						if (ret >= 0) {
 							db.setTransactionSuccessful()
 						}
@@ -296,7 +323,8 @@ object DbContract {
 			 */
 			fun select(helper: DbHelper, bid: Long): List<TagRecord> {
 				val args = arrayOf(bid.toString())
-				val cursor = helper.readableDatabase.rawQuery(QUERY_CONTENT +
+				val cursor = helper.readableDatabase.rawQuery(
+					QUERY_CONTENT +
 						" order by t.${Tags.COL_TAG_NAME}", args)
 
 				val result = mutableListOf<TagRecord>()
@@ -317,7 +345,11 @@ object DbContract {
 			 * Add a note/tag relationship.
 			 */
 			fun insert(helper: DbHelper, bid: Long, tid: Long): Long {
-				return insert(helper.writableDatabase, bid, tid)
+				return insert(
+					helper.writableDatabase,
+					bid,
+					tid
+				)
 			}
 			private fun insert(db: SQLiteDatabase, bid: Long, tid: Long): Long {
 				val newRow = ContentValues().apply {

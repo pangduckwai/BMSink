@@ -30,7 +30,7 @@
 			</intent-filter>
 		</activity>
 		<activity
-				android:name=".BookmarkDetails"
+				android:name=".details.BookmarkDetails"
 				android:excludeFromRecents="true"
 				android:label="@string/app_name"
 				android:launchMode="singleInstance"

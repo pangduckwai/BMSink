@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
+import org.sea9.android.bookmarks.data.DbContract
+import org.sea9.android.bookmarks.data.DbHelper
 
 class MainContext : Fragment(), DbHelper.Caller, BookmarkAdaptor.Caller {
 	companion object {

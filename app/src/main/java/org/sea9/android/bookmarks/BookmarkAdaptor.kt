@@ -6,6 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import org.sea9.android.bookmarks.data.BookmarkRecord
+import org.sea9.android.bookmarks.data.DbContract
+import org.sea9.android.bookmarks.data.DbHelper
 
 class BookmarkAdaptor(ctx: Caller): RecyclerView.Adapter<BookmarkAdaptor.ViewHolder>() {
 	companion object {

@@ -1,4 +1,4 @@
-package org.sea9.android.bookmarks
+package org.sea9.android.bookmarks.data
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
@@ -9,7 +9,8 @@ class DbHelper(private val caller: Caller, isTest: Boolean):
 	SQLiteOpenHelper(caller.getContext()
 		, DB_NAME + (if (isTest) "_test" else "")
 		, null
-		, DB_VERN) {
+		, DB_VERN
+	) {
 	constructor(caller: Caller): this(caller, false)
 
 	companion object {

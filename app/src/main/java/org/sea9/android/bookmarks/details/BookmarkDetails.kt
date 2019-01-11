@@ -1,4 +1,4 @@
-package org.sea9.android.bookmarks
+package org.sea9.android.bookmarks.details
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -9,6 +9,8 @@ import android.util.Log
 import android.widget.TextView
 
 import kotlinx.android.synthetic.main.details_main.*
+import org.sea9.android.bookmarks.MainContext
+import org.sea9.android.bookmarks.R
 
 class BookmarkDetails : AppCompatActivity() {
 	companion object {
