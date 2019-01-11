@@ -24,6 +24,7 @@ class ExampleInstrumentedTest {
 		private lateinit var context: Context
 		private lateinit var helper: DbHelper
 		private lateinit var tags: List<TagRecord>
+		private var bids = longArrayOf(-1, -1, -1, -1, -1)
 
 		@BeforeClass
 		@JvmStatic
@@ -75,7 +76,7 @@ class ExampleInstrumentedTest {
 						"https://gist.github.com/staltz/868e7e9bc2a7b8c1f754",
 						"The introduction to Reactive Programming you've been missing",
 						mutableSetOf(tags[4]), 0))
-				DbContract.Bookmarks.insert(helper,
+				bids[4] = DbContract.Bookmarks.insert(helper,
 					BookmarkRecord("{" +
 							"	'id'      : -1," +
 							"	'url'     : 'https://12factor.net/'," +
@@ -90,16 +91,16 @@ class ExampleInstrumentedTest {
 				DbContract.Bookmarks.insert(helper, BookmarkRecord(-1,
 						"https://www.techradar.com/news/best-garmin-running-watches",
 						"Best Garmin watch 2018", mutableSetOf(tags[2], tags[4]), 0))
-				DbContract.Bookmarks.insert(helper, BookmarkRecord(-1,
+				bids[3] = DbContract.Bookmarks.insert(helper, BookmarkRecord(-1,
 						"http://playitagain.info/site/movie-index/",
 						"Movie Index | Play It Again", mutableSetOf(tags[1]), 0))
-				DbContract.Bookmarks.insert(helper, BookmarkRecord(-1,
+				bids[2] = DbContract.Bookmarks.insert(helper, BookmarkRecord(-1,
 						"https://danielpocock.com/quick-start-blender-video-editing",
 						"Quick start using Blender for video editing", mutableSetOf(tags[2], tags[4]), 0))
-				DbContract.Bookmarks.insert(helper, BookmarkRecord(-1,
+				bids[1] = DbContract.Bookmarks.insert(helper, BookmarkRecord(-1,
 						"https://www.anker.com/products/108/chargers",
 						"Anker | chargers", mutableSetOf(tags[2]), 0))
-				DbContract.Bookmarks.insert(helper,
+				bids[0] = DbContract.Bookmarks.insert(helper,
 					BookmarkRecord("{" +
 							"	'id'      : -1," +
 							"	'url'     : 'https://sea9.org'," +
@@ -137,6 +138,19 @@ class ExampleInstrumentedTest {
 			Log.w("bookmarks.itest.testDeleteUnusedTags", ">>> TAG: $index : $tagRecord")
 		}
 		assertTrue(tagList.size == 4)
+	}
+
+	@Test
+	fun testSearchTags() {
+		var result = DbContract.Tags.search(helper, "games")
+		Log.w("bookmarks.itest.testPrimaryKey", "Search result 1: ${result.size}")
+		assertTrue(result.isEmpty())
+		result = DbContract.Tags.search(helper, "es")
+		Log.w("bookmarks.itest.testPrimaryKey", "Search result 2: ${result.size}")
+		assertTrue(result.size == 2)
+		result = DbContract.Tags.search(helper, "TECH")
+		Log.w("bookmarks.itest.testPrimaryKey", "Search result 3: ${result.size}")
+		assertTrue(result.size == 1)
 	}
 
 	@Test(expected = SQLException::class)
@@ -216,6 +230,75 @@ class ExampleInstrumentedTest {
 			Log.w("bookmarks.itest.testInsert", ">>> TAG: $index : $record")
 		}
 
-		assertTrue(tagList.size == 4 && bookmarks.size == 14)
+		assertTrue(tagList.size == 4 && bookmarks.size == 13)
+	}
+
+	@Test
+	fun testUpdateNoChange() {
+		Log.w("bookmarks.itest.testUpdateNoChange", "Update a bookmark")
+		val result = DbContract.Bookmarks.update(helper,
+			BookmarkRecord("{" +
+					"	'id'      : ${bids[4]}," +
+					"	'url'     : 'https://12factor.net/'," +
+					"	'title'   : 'The Twelve-Factor App'," +
+					"	'category': [" +
+					"		{'id' : ${tags[4].rid}, 'tag' : 'Technology'}" +
+					"	]" +
+					"}"))
+		assertTrue(result == 0)
+	}
+
+	@Test(expected = SQLException::class)
+	fun testUpdateThrow() {
+		Log.w("bookmarks.itest.testUpdateThrow", "Update a bookmark")
+		val result = DbContract.Bookmarks.update(helper,
+			BookmarkRecord("{" +
+					"	'id'      : ${bids[0]}," +
+					"	'url'     : 'https://sea9.org'," +
+					"	'title'   : 'Event Sourcing'," +
+					"	'category': [" +
+					"		{'id' : ${tags[2].rid}, 'tag' : 'Hobbies'}," +
+					"		{'id' : ${tags[4].rid}, 'tag' : 'Technology'}" +
+					"	]" +
+					"}"))
+		assertTrue(result == 0)
+	}
+
+	@Test
+	fun testUpdateBookmarkChanged() {
+		Log.w("bookmarks.itest.testUpdateBookmarkChanged", "Update a bookmark")
+		val result = DbContract.Bookmarks.update(helper,
+			BookmarkRecord("{" +
+					"	'id'      : ${bids[1]}," +
+					"	'url'     : 'https://www.anker.com/products/108/chargers'," +
+					"	'title'   : 'Anker || chargers'," +
+					"	'category': [" +
+					"		{'id' : ${tags[2].rid}, 'tag' : 'Hobbies'}" +
+					"	]" +
+					"}"))
+		assertTrue(result == 1)
+	}
+
+	@Test
+	fun testUpdateTagChanged() {
+		Log.w("bookmarks.itest.testUpdateTagChanged", "Update a bookmark")
+		val result = DbContract.Bookmarks.update(helper,
+			BookmarkRecord("{" +
+					"	'id'      : ${bids[2]}," +
+					"	'url'     : 'https://danielpocock.com/quick-start-blender-video-editing'," +
+					"	'title'   : 'Quick start using Blender for video editing'," +
+					"	'category': [" +
+					"		{'id' : ${tags[2].rid}, 'tag' : 'Hobbies'}" +
+					"	]" +
+					"}"))
+		assertTrue(result == 1)
+	}
+
+	@Test
+	fun testDeleteBookmark() {
+		Log.w("bookmarks.itest.testDeleteBookmark", "Delete a bookmark")
+		val result = DbContract.Bookmarks.delete(helper, bids[3])
+		Log.w("bookmarks.itest.testDeleteBookmark", "Delete result $result")
+		assertTrue(result == 1)
 	}
 }

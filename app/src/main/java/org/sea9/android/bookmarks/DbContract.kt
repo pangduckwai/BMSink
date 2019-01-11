@@ -32,7 +32,7 @@ object DbContract {
 			const val SQL_DROP_IDX = "drop index if exists $IDX_TAG"
 
 			private const val QUERY_SEARCH =
-				"select $PKEY from $TABLE where $COL_TAG_NAME = ?"
+				"select $PKEY from $TABLE where $COL_TAG_NAME like ?"
 
 			private const val QUERY_DELETE =
 				"delete from $TABLE where $PKEY not in " +
@@ -64,7 +64,7 @@ object DbContract {
 			 * Search by tag name if a record already exists or not.
 			 */
 			fun search(helper: DbHelper, tagName: String): List<Long> {
-				val args = arrayOf(tagName)
+				val args = arrayOf("%$tagName%")
 				val cursor = helper.readableDatabase.rawQuery(QUERY_SEARCH, args)
 
 				val result = mutableListOf<Long>()
@@ -102,8 +102,8 @@ object DbContract {
 	class Bookmarks : BaseColumns {
 		companion object {
 			const val TABLE = "Bookmarks"
-			const val COL_URL = "url"
-			const val COL_TITLE = "title"
+			private const val COL_URL = "url"
+			private const val COL_TITLE = "title"
 			private const val COL_MODF = "modf"
 			private const val IDX_URL = "idxUrl"
 			private const val IDX_TITLE = "idxTitle"
@@ -218,7 +218,7 @@ object DbContract {
 						if (record.title != rec.title) put(COL_TITLE, record.title)
 						if (size() > 0) put(COMMON_MODF, Date().time)
 					}
-					val ret = if (newRow.size() > 0) db.update(TABLE, newRow, COMMON_PKEY, args) else 0
+					var ret = if (newRow.size() > 0) db.update(TABLE, newRow, COMMON_PKEY, args) else 0
 
 					if (ret >= 0) {
 						if (((record.category != null) && (rec.category == null)) ||
@@ -226,13 +226,15 @@ object DbContract {
 							((record.category != null) && (rec.category != null) && (record.category != rec.category))) {
 							val count = db.delete(BookmarkTags.TABLE, "${BookmarkTags.COL_BID} = ?", args)
 							if (count >= 0) {
+								var error = false
 								record.category?.forEach { tag ->
 									if (BookmarkTags.insert(helper, record.rid, tag.rid) < 0)
-										throw RuntimeException("Persisting tag ${tag.rid} failed")
+										error = true
 								}
+								ret = if (error) -2 else 1
 							}
 						}
-						db.setTransactionSuccessful()
+						if (ret > 0) db.setTransactionSuccessful()
 					}
 					return ret
 				} finally {
@@ -310,21 +312,6 @@ object DbContract {
 				}
 				return result
 			}
-			fun selectIds(helper: DbHelper, bid: Long): List<Long> {
-				val args = arrayOf(bid.toString())
-				val cursor = helper.readableDatabase.rawQuery(QUERY_CONTENT, args)
-
-				val result = mutableListOf<Long>()
-				cursor.use {
-					with(it) {
-						while (moveToNext()) {
-							val tid = getLong(getColumnIndexOrThrow(COL_TID))
-							result.add(tid)
-						}
-					}
-				}
-				return result
-			}
 
 			/**
 			 * Add a note/tag relationship.
@@ -332,7 +319,7 @@ object DbContract {
 			fun insert(helper: DbHelper, bid: Long, tid: Long): Long {
 				return insert(helper.writableDatabase, bid, tid)
 			}
-			fun insert(db: SQLiteDatabase, bid: Long, tid: Long): Long {
+			private fun insert(db: SQLiteDatabase, bid: Long, tid: Long): Long {
 				val newRow = ContentValues().apply {
 					put(COL_BID, bid)
 					put(COL_TID, tid)
