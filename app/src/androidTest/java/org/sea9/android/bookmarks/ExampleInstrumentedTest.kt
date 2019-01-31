@@ -290,7 +290,7 @@ class ExampleInstrumentedTest {
 		val bookmarks = DbContract.Bookmarks.select(helper)
 		Log.w("bookmarks.itest.testInsert", "No. of rows returned: ${bookmarks.size}")
 		bookmarks.forEachIndexed { index, record ->
-			Log.w("bookmarks.itest.testInsert", ">>> TAG: $index : $record")
+			Log.w("bookmarks.itest.testInsert", ">>> Bookmark: $index : $record")
 		}
 
 		assertTrue(tagList.size == 4 && bookmarks.size == 13)

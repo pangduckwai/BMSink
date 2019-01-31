@@ -13,6 +13,7 @@ import org.sea9.android.bookmarks.data.DbHelper
 class BookmarkAdaptor(ctx: Caller): RecyclerView.Adapter<BookmarkAdaptor.ViewHolder>() {
 	companion object {
 		const val TAG = "bookmarks.adaptor"
+		const val SPACE = " "
 	}
 
 	private val caller: Caller = ctx
@@ -52,6 +53,18 @@ class BookmarkAdaptor(ctx: Caller): RecyclerView.Adapter<BookmarkAdaptor.ViewHol
 		val selected = cache[position]
 		holder.ttl.text = selected.title
 		holder.url.text = selected.url
+
+		if (selected.category != null) {
+			val buff = StringBuilder()
+			for (tag in selected.category!!) {
+				buff.append(tag.tag).append(SPACE)
+			}
+			holder.tag.text = if (buff.toString().isNotBlank()) {
+				buff.toString().trim()
+			} else {
+				SPACE
+			}
+		}
 	}
 
 	override fun getItemCount(): Int {
@@ -73,6 +86,7 @@ class BookmarkAdaptor(ctx: Caller): RecyclerView.Adapter<BookmarkAdaptor.ViewHol
 	class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
 		val ttl: TextView = view.findViewById(R.id.title)
 		val url: TextView = view.findViewById(R.id.url)
+		val tag: TextView = view.findViewById(R.id.tags)
 	}
 
 	/*=========================================
