@@ -3,8 +3,11 @@ package org.sea9.android.bookmarks.details
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.widget.TextView
 
@@ -15,10 +18,13 @@ import org.sea9.android.bookmarks.R
 class BookmarkDetails : AppCompatActivity() {
 	companion object {
 		const val TAG = "bookmarks.details"
+		const val PREFIX = "http"
 	}
 
 	private lateinit var cntxFrag: MainContext
-	private lateinit var tempText: TextView
+	private lateinit var txtTitle: TextView
+	private lateinit var txtUrl: TextView
+	private lateinit var recycler: RecyclerView
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -28,45 +34,47 @@ class BookmarkDetails : AppCompatActivity() {
 		cntxFrag = MainContext.getInstance(supportFragmentManager)
 
 		fab.setOnClickListener { view ->
-			Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-				.setAction("Action", null).show()
+			if (!txtUrl.text.startsWith(PREFIX)) {
+				Snackbar.make(view, getString(R.string.msg_not_http), Snackbar.LENGTH_LONG)
+					.setAction("Action", null).show()
+			} else {
+				// TODO TEMP: the following should be code to save the bookmark
+				Snackbar.make(view, "TEMP!!! ${recycler.adapter?.itemCount} tags retrieved", Snackbar.LENGTH_LONG)
+					.setAction("Action", null).show()
+			}
 		}
 
-		tempText = findViewById(R.id.bookmark)
+		txtTitle = findViewById(R.id.title)
+		txtUrl = findViewById(R.id.url)
+		recycler = findViewById(R.id.tags)
+		recycler.setHasFixedSize(true) // improve performance since content changes do not affect layout size of the RecyclerView
+		recycler.layoutManager = LinearLayoutManager(this) // use a linear layout manager
 
 		handleIncomingIntent(intent)
+	}
+
+	override fun onResume() {
+		super.onResume()
+		Log.w(TAG, "onResume()")
+
+		recycler.adapter = cntxFrag.tagAdaptor
+
+		Handler().postDelayed({
+			cntxFrag.tagAdaptor.notifyDataSetChanged()
+		}, 50)
 	}
 
 	@SuppressLint("SetTextI18n")
 	private fun handleIncomingIntent(intent: Intent?) {
 		Log.w(TAG, "handleIncomingIntent()")
-		var text =
-				"Action\n${intent?.action}\n\n" +
-				"Type\n${intent?.type}\n\n" +
-				"Component\n${intent?.component?.flattenToString()}\n\n" +
-				"Data\n${intent?.dataString}\n\n"
-
-		if (intent != null) {
-			if (intent.categories != null) {
-				text += "Categories\n"
-				for (cat in intent.categories) {
-					text += (cat + "\n")
-				}
-				text += "\n"
-			} else {
-				text += "No category\n\n"
-			}
-
-			if (intent.extras != null) {
-				text != "Extras\n"
-				for (xtr in intent.extras.keySet()) {
-					text += (xtr + "\n" + intent.extras.get(xtr).toString() + "\n\n")
-				}
-			} else {
-				text += "No extras\n\n"
-			}
+		if ((intent == null) || (intent.extras == null) ||
+			!intent.extras!!.containsKey(Intent.EXTRA_SUBJECT) ||
+			!intent.extras!!.containsKey(Intent.EXTRA_TEXT)) {
+			finish() // Nothing to record, close the activity
+			return
 		}
 
-		tempText.text = text
+		txtTitle.text = intent.extras!!.get(Intent.EXTRA_SUBJECT)?.toString()
+		txtUrl.text = intent.extras!!.get(Intent.EXTRA_TEXT)?.toString()
 	}
 }

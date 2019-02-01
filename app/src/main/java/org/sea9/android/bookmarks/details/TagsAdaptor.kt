@@ -22,6 +22,13 @@ class TagsAdaptor(ctx: Caller): RecyclerView.Adapter<TagsAdaptor.ViewHolder>() {
 
 	private val index = LongSparseArray<Int>()
 
+	fun getTag(tid: Long): String? {
+		return if (index.size() > 0) {
+			cache.get(index.get(tid)).tag
+		} else
+			null
+	}
+
 	val selectedTags = mutableListOf<Long>()
 	fun isSelected(position: Int): Boolean {
 		return selectedTags.contains(cache[position].rid)
@@ -44,12 +51,12 @@ class TagsAdaptor(ctx: Caller): RecyclerView.Adapter<TagsAdaptor.ViewHolder>() {
 		val item = LayoutInflater.from(parent.context).inflate(R.layout.tag_item, parent, false) as TextView
 		item.setOnClickListener {
 			val position = recyclerView.getChildLayoutPosition(it)
-			val index = selectedTags.indexOf(cache[position].rid)
-			if (index >= 0)
-				selectedTags.removeAt(index)
+			val idx = selectedTags.indexOf(cache[position].rid)
+			if (idx >= 0)
+				selectedTags.removeAt(idx)
 			else
 				selectedTags.add(cache[position].rid)
-			caller.tagsUpdated()
+//			caller.tagsUpdated()
 			notifyDataSetChanged()
 		}
 		return ViewHolder(item)
@@ -66,9 +73,11 @@ class TagsAdaptor(ctx: Caller): RecyclerView.Adapter<TagsAdaptor.ViewHolder>() {
 	//=====================================================
 
 	fun populateCache() {
-		cache = DbContract.Tags.select(caller.getDbHelper())
-		cache.forEachIndexed { i, record ->
-			index.put(record.rid, i)
+		if (caller.isDbReady()) {
+			cache = DbContract.Tags.select(caller.getDbHelper()!!)
+			cache.forEachIndexed { i, record ->
+				index.put(record.rid, i)
+			}
 		}
 	}
 
@@ -83,7 +92,7 @@ class TagsAdaptor(ctx: Caller): RecyclerView.Adapter<TagsAdaptor.ViewHolder>() {
 		}
 		if ((position >= 0) && !isSelected(position)) {
 			selectedTags.add(bid)
-			caller.tagsUpdated()
+//			caller.tagsUpdated()
 		}
 		notifyDataSetChanged()
 		return position
@@ -101,7 +110,8 @@ class TagsAdaptor(ctx: Caller): RecyclerView.Adapter<TagsAdaptor.ViewHolder>() {
 	 * Access interface to the ContextFragment
 	 */
 	interface Caller {
-		fun tagsUpdated()
-		fun getDbHelper(): DbHelper
+//		fun tagsUpdated()
+		fun isDbReady(): Boolean
+		fun getDbHelper(): DbHelper?
 	}
 }

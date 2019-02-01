@@ -7,8 +7,9 @@ import android.support.v4.app.FragmentManager
 import android.util.Log
 import org.sea9.android.bookmarks.data.DbContract
 import org.sea9.android.bookmarks.data.DbHelper
+import org.sea9.android.bookmarks.details.TagsAdaptor
 
-class MainContext : Fragment(), DbHelper.Caller, BookmarkAdaptor.Caller {
+class MainContext : Fragment(), DbHelper.Caller, BookmarkAdaptor.Caller, TagsAdaptor.Caller {
 	companion object {
 		const val TAG = "bookmarks.context"
 
@@ -36,12 +37,16 @@ class MainContext : Fragment(), DbHelper.Caller, BookmarkAdaptor.Caller {
 	lateinit var adaptor: BookmarkAdaptor
 		private set
 
+	lateinit var tagAdaptor: TagsAdaptor
+		private set
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		Log.d(TAG, "onCreate()")
 		retainInstance = true
 
 		adaptor = BookmarkAdaptor(this)
+		tagAdaptor = TagsAdaptor(this)
 	}
 
 	override fun onResume() {
@@ -51,15 +56,19 @@ class MainContext : Fragment(), DbHelper.Caller, BookmarkAdaptor.Caller {
 			initDb()
 		} else {
 			adaptor.populateCache()
+			tagAdaptor.populateCache()
 		}
 	}
 
 	/*===================================================
-		 * @see org.sea9.android.secret.data.DbHelper.Caller
-		 */
+	 * @see org.sea9.android.secret.data.DbHelper.Caller
+	 */
 	override fun onReady() {
 		Log.d(TAG, "db ready")
-		activity?.runOnUiThread { adaptor.populateCache() }
+		activity?.runOnUiThread {
+			adaptor.populateCache()
+			tagAdaptor.populateCache()
+		}
 	}
 
 	private fun initDb() {
